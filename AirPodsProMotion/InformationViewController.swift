@@ -10,7 +10,7 @@ class InformationViewController: UIViewController {
         view.frame = CGRect(x: self.view.bounds.minX + (self.view.bounds.width / 10),
                             y: self.view.bounds.minY + (self.view.bounds.height / 6),
                             width: self.view.bounds.width * 0.8, height: self.view.bounds.height * 0.3)
-        view.text = "Looking for AirPods Pro"
+        view.text = "Starting pedometer..."
         view.font = UIFont.systemFont(ofSize: 18)
         view.isEditable = false
         view.textAlignment = .center
@@ -19,7 +19,7 @@ class InformationViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.title = "Information View"
+        self.title = "Pace Tracker"
         view.backgroundColor = .systemBackground
         view.addSubview(textView)
 
@@ -33,23 +33,25 @@ class InformationViewController: UIViewController {
 
     private func startPedometerUpdates() {
         guard CMPedometer.isPaceAvailable() else {
-            textView.text = "Pace data is not available on this device."
+            updateTextView("Pace data is not available on this device.")
             return
         }
 
+        updateTextView("Tracking pace...")
+
         pedometer.startUpdates(from: Date()) { [weak self] data, error in
-            guard let self = self, let data = data, error == nil else {
-                DispatchQueue.main.async {
-                    self?.textView.text = "Error fetching pedometer data."
-                }
-                return
-            }
+            guard let self = self else { return }
 
             DispatchQueue.main.async {
-                if let pace = data.currentPace {
-                    self.textView.text = "Current Pace: \(pace) steps/sec"
+                if let error = error {
+                    self.updateTextView("Error: \(error.localizedDescription)")
+                    return
+                }
+
+                if let pace = data?.currentPace {
+                    self.updateTextView("Current Pace: \(pace) steps/sec")
                 } else {
-                    self.textView.text = "Pace data is not available yet."
+                    self.updateTextView("Pace data is not available yet.")
                 }
             }
         }
@@ -57,5 +59,12 @@ class InformationViewController: UIViewController {
 
     private func stopPedometerUpdates() {
         pedometer.stopUpdates()
+        updateTextView("Pace tracking stopped.")
+    }
+
+    private func updateTextView(_ text: String) {
+        DispatchQueue.main.async {
+            self.textView.text = text
+        }
     }
 }
