@@ -24,8 +24,9 @@ class InformationViewController: UIViewController, CMHeadphoneMotionManagerDeleg
     
     
     //AirPods Pro => APP :)
-    let APP = CMHeadphoneMotionManager()
-    
+    // let APP = CMHeadphoneMotionManager()
+    let APP_2 = CMPedometer()
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,18 +35,41 @@ class InformationViewController: UIViewController, CMHeadphoneMotionManagerDeleg
         view.addSubview(textView)
         
         
-        APP.delegate = self
+        APP_2.delegate = self
         
-        guard APP.isDeviceMotionAvailable else {
-            AlertView.alert(self, "Sorry", "Your device is not supported.")
-            textView.text = "Sorry, Your device is not supported."
+        // guard APP_2.isDeviceMotionAvailable else {
+        //     AlertView.alert(self, "Sorry", "Your device is not supported.")
+        //     textView.text = "Sorry, Your device is not supported."
+        //     return
+        // }
+        
+        guard CMPedometer.isPaceAvailable() else {
+            print("Pace data is not available on this device.")
             return
         }
+        // APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
+        //     guard let motion = motion, error == nil else { return }
+        //     self?.printData(motion)
+        // })
+
         
-        APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
-            guard let motion = motion, error == nil else { return }
-            self?.printData(motion)
-        })
+        APP_2.startUpdates(from: Date()) { (data, error) in
+            guard let data = data, error == nil else {
+                print("Error fetching pedometer data: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
+            if let pace = data.currentPace {
+                print("Current Pace: \(pace) steps per second")
+                self.textView.text = """
+                    Pace: 
+                        \(data.currentPace)
+                    """
+            } else {
+                print("Pace data is not available yet.")
+            }
+        }
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -54,38 +78,7 @@ class InformationViewController: UIViewController, CMHeadphoneMotionManagerDeleg
     
     override func viewWillDisappear(_ animated: Bool) {
         APP.stopDeviceMotionUpdates()
+        APP_2.stopDeviceMotionUpdates()
     }
     
-    
-    func printData(_ data: CMDeviceMotion) {
-        print(data)
-        self.textView.text = """
-            Quaternion:
-                x: \(data.attitude.quaternion.x)
-                y: \(data.attitude.quaternion.y)
-                z: \(data.attitude.quaternion.z)
-                w: \(data.attitude.quaternion.w)
-            Attitude:
-                pitch: \(data.attitude.pitch)
-                roll: \(data.attitude.roll)
-                yaw: \(data.attitude.yaw)
-            Gravitational Acceleration:
-                x: \(data.gravity.x)
-                y: \(data.gravity.y)
-                z: \(data.gravity.z)
-            Rotation Rate:
-                x: \(data.rotationRate.x)
-                y: \(data.rotationRate.y)
-                z: \(data.rotationRate.z)
-            Acceleration:
-                x: \(data.userAcceleration.x)
-                y: \(data.userAcceleration.y)
-                z: \(data.userAcceleration.z)
-            Magnetic Field:
-                field: \(data.magneticField.field)
-                accuracy: \(data.magneticField.accuracy)
-            Heading:
-                \(data.heading)
-            """
-    }
 }

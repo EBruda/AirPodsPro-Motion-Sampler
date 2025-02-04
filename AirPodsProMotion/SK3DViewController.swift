@@ -25,6 +25,7 @@ class SK3DViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
         APP.delegate = self
 
         SceneSetUp()
+       
         
         guard APP.isDeviceMotionAvailable else {
             AlertView.alert(self, "Sorry", "Your device is not supported.")
@@ -34,6 +35,7 @@ class SK3DViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
             guard let motion = motion, error == nil else { return }
             self?.NodeRotate(motion)
         })
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
