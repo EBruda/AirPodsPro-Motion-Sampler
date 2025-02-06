@@ -89,6 +89,15 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
             self.printData(motion)
         })
     }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(startAction)
+        alert.addAction(cancelAction)
+        
+        // Present the alert before starting motion updates
+        DispatchQueue.main.async {
+            self.present(alert, animated: true, completion: nil)
+        }
 
         // APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
         //     guard let motion = motion, error == nil else { return }
