@@ -67,6 +67,11 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
     }
     
     func start() {
+        let alert = UIAlertController(title: "Enter Desired Pace", message: "Specify your pace (e.g., slow, moderate, fast)", preferredStyle: .alert)
+        alert.addTextField { textField in
+                    textField.placeholder = "Enter pace here..."
+        }
+        
         APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
             guard let motion = motion, error == nil else { return }
                 self?.writer.write(motion)
