@@ -65,6 +65,8 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         APP.stopDeviceMotionUpdates()
         button.setTitle("Start", for: .normal)
     }
+
+
     
     func start() {
         let alert = UIAlertController(title: "Enter Desired Pace", message: "Specify your pace (e.g., slow, moderate, fast)", preferredStyle: .alert)
@@ -72,11 +74,27 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
                     textField.placeholder = "Enter pace here..."
         }
         
-        APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
+        let startAction = UIAlertAction(title: "Start", style: .default) { [weak self] _ in
+        guard let self = self, let pace = alert.textFields?.first?.text, !pace.isEmpty else { return }
+        
+        // Display selected pace in textView
+        DispatchQueue.main.async {
+            self.textView.text = "Recording started with pace: \(pace)\n\n" + self.textView.text
+        }
+        
+        // Start motion updates after getting the pace
+        self.APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: { motion, error in
             guard let motion = motion, error == nil else { return }
-                self?.writer.write(motion)
-            self?.printData(motion)
+            self.writer.write(motion)
+            self.printData(motion)
         })
+    }
+
+        // APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
+        //     guard let motion = motion, error == nil else { return }
+        //         self?.writer.write(motion)
+        //     self?.printData(motion)
+        // })
     }
     
     func stop() { APP.stopDeviceMotionUpdates() }
