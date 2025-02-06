@@ -9,10 +9,7 @@ import Foundation
 import UIKit
 import CoreMotion
 import MediaPlayer
-
-class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
-    
-    //Update system volume
+//Update system volume
         extension MPVolumeView {
             static func setVolume(_ volume: Float) {
                 let volumeView = MPVolumeView()
@@ -23,6 +20,10 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
                 }
             }
         }
+        
+class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
+    
+    
     lazy var button: UIButton = {
         let button = UIButton(type: .system)
         button.frame = CGRect(x: self.view.bounds.width / 4, y: self.view.bounds.maxY - 100,
