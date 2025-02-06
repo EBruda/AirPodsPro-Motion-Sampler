@@ -8,8 +8,21 @@
 import Foundation
 import UIKit
 import CoreMotion
+import MediaPlayer
+//Update system volume
+        extension MPVolumeView {
+            static func setVolume(_ volume: Float) {
+                let volumeView = MPVolumeView()
+                let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider
 
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
+                    slider?.value = volume
+                }
+            }
+        }
+        
 class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
+    
     
     lazy var button: UIButton = {
         let button = UIButton(type: .system)
@@ -35,7 +48,8 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         view.isEditable = false
         return view
     }()
-    
+ 
+
     
     //AirPods Pro => APP :)
     let APP = CMHeadphoneMotionManager()
@@ -65,83 +79,57 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         APP.stopDeviceMotionUpdates()
         button.setTitle("Start", for: .normal)
     }
-
-
-@objc func Tap() {
-    if write {
-        write.toggle()
-        writer.close()
-        stop()
-        button.setTitle("Start", for: .normal)
-        AlertView.action(self, handler: { [weak self] _ in self?.viewCreatedFiles() }, animated: true)
-    } else {
-        guard APP.isDeviceMotionAvailable else {
-            AlertView.alert(self, "Sorry", "Your device is not supported.")
-            return
-        }
-        
-        // Call start() to prompt user for pace before recording begins
-        start()
-    }
-}
-
-
+    
     func start() {
-    let alert = UIAlertController(
-        title: "Enter Desired Pace",
-        message: "Specify your pace (in mph)",
-        preferredStyle: .alert
-    )
-
-    alert.addTextField { textField in
-        textField.placeholder = "Enter pace here..."
-    }
-
-    let startAction = UIAlertAction(title: "Start", style: .default) { [weak self] _ in
-        guard let self = self, let pace = alert.textFields?.first?.text, !pace.isEmpty else { return }
-
-        // Display selected pace in textView
-        DispatchQueue.main.async {
-            self.textView.text = "Recording started with pace: \(pace)\n\n" + self.textView.text
-        }
-
-        // Toggle writing state **after user input**
-        self.write = true
-        self.button.setTitle("Stop", for: .normal)
-
-        // Prepare file for writing
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let now = Date()
-        let filename = self.f.string(from: now) + "_motion.csv"
-        let fileUrl = dir.appendingPathComponent(filename)
-        self.writer.open(fileUrl)
-
-        // Start motion updates
-        self.APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: { motion, error in
+        APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
             guard let motion = motion, error == nil else { return }
-            self.writer.write(motion)
-            self.printData(motion)
+                self?.writer.write(motion)
+            self?.printData(motion)
         })
     }
-
-    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-
-    alert.addAction(startAction)
-    alert.addAction(cancelAction)
-
-    // Present the alert before starting motion updates
-    DispatchQueue.main.async {
-        self.present(alert, animated: true, completion: nil)
-    }
-}
-
-
+    
     func stop() { APP.stopDeviceMotionUpdates() }
     
+    @objc func Tap() {
+        if write {
+            write.toggle()
+            writer.close()
+            stop()
+            button.setTitle("Start", for: .normal)
+            AlertView.action(self, handler: {[weak self](_) in self?.viewCreatedFiles()}, animated: true)
+        } else {
+            guard APP.isDeviceMotionAvailable else {
+                AlertView.alert(self, "Sorry", "Your device is not supported.")
+                return
+            }
+            write.toggle()
+            button.setTitle("Stop", for: .normal)
+            let dir = FileManager.default.urls(
+              for: .documentDirectory,
+              in: .userDomainMask
+            ).first!
 
+            let now = Date()
+            let filename = f.string(from: now) + "_motion.csv"
+            let fileUrl = dir.appendingPathComponent(filename)
+            writer.open(fileUrl)
+            start()
+        }
+    }
+    
     func printData(_ data: CMDeviceMotion) {
-        self.textView.font = UIFont.systemFont(ofSize: 18) // Set larger font size
-        self.textView.text =  """
+        MPVolumeView.setVolume(0.2)
+
+        self.textView.text = """
+            Quaternion:
+                x: \(data.attitude.quaternion.x)
+                y: \(data.attitude.quaternion.y)
+                z: \(data.attitude.quaternion.z)
+                w: \(data.attitude.quaternion.w)
+            Attitude:
+                pitch: \(data.attitude.pitch)
+                roll: \(data.attitude.roll)
+                yaw: \(data.attitude.yaw)
             Gravitational Acceleration:
                 x: \(data.gravity.x)
                 y: \(data.gravity.y)
@@ -155,7 +143,6 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
                 y: \(data.userAcceleration.y)
                 z: \(data.userAcceleration.z)
             """
-
     }
     
     func viewCreatedFiles()
