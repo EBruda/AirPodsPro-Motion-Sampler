@@ -89,7 +89,7 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
     func start() {
     let alert = UIAlertController(
         title: "Enter Desired Pace",
-        message: "Specify your pace (e.g., slow, moderate, fast)",
+        message: "Specify your pace (in mph)",
         preferredStyle: .alert
     )
 
@@ -138,44 +138,10 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
 
     func stop() { APP.stopDeviceMotionUpdates() }
     
-    // @objc func Tap() {
-    //     if write {
-    //         write.toggle()
-    //         writer.close()
-    //         stop()
-    //         button.setTitle("Start", for: .normal)
-    //         AlertView.action(self, handler: {[weak self](_) in self?.viewCreatedFiles()}, animated: true)
-    //     } else {
-    //         guard APP.isDeviceMotionAvailable else {
-    //             AlertView.alert(self, "Sorry", "Your device is not supported.")
-    //             return
-    //         }
-    //         write.toggle()
-    //         button.setTitle("Stop", for: .normal)
-    //         let dir = FileManager.default.urls(
-    //           for: .documentDirectory,
-    //           in: .userDomainMask
-    //         ).first!
 
-    //         let now = Date()
-    //         let filename = f.string(from: now) + "_motion.csv"
-    //         let fileUrl = dir.appendingPathComponent(filename)
-    //         writer.open(fileUrl)
-    //         start()
-    //     }
-    // }
-    
     func printData(_ data: CMDeviceMotion) {
-        self.textView.text = """
-            Quaternion:
-                x: \(data.attitude.quaternion.x)
-                y: \(data.attitude.quaternion.y)
-                z: \(data.attitude.quaternion.z)
-                w: \(data.attitude.quaternion.w)
-            Attitude:
-                pitch: \(data.attitude.pitch)
-                roll: \(data.attitude.roll)
-                yaw: \(data.attitude.yaw)
+        self.textView.font = UIFont.systemFont(ofSize: 18) // Set larger font size
+        self.textView.text =  """
             Gravitational Acceleration:
                 x: \(data.gravity.x)
                 y: \(data.gravity.y)
@@ -189,6 +155,7 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
                 y: \(data.userAcceleration.y)
                 z: \(data.userAcceleration.z)
             """
+
     }
     
     func viewCreatedFiles()
