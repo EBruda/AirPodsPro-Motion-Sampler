@@ -8,9 +8,21 @@
 import Foundation
 import UIKit
 import CoreMotion
+import MediaPlayer
 
 class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegate {
     
+    //Update system volume
+        extension MPVolumeView {
+            static func setVolume(_ volume: Float) {
+                let volumeView = MPVolumeView()
+                let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider
+
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.01) {
+                    slider?.value = volume
+                }
+            }
+        }
     lazy var button: UIButton = {
         let button = UIButton(type: .system)
         button.frame = CGRect(x: self.view.bounds.width / 4, y: self.view.bounds.maxY - 100,
@@ -35,7 +47,8 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         view.isEditable = false
         return view
     }()
-    
+ 
+
     
     //AirPods Pro => APP :)
     let APP = CMHeadphoneMotionManager()
@@ -104,6 +117,8 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
     }
     
     func printData(_ data: CMDeviceMotion) {
+        MPVolumeView.setVolume(0.2)
+
         self.textView.text = """
             Quaternion:
                 x: \(data.attitude.quaternion.x)
