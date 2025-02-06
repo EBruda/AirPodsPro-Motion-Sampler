@@ -67,73 +67,103 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
     }
 
 
-    
-    func start() {
-        let alert = UIAlertController(title: "Enter Desired Pace", message: "Specify your pace (e.g., slow, moderate, fast)", preferredStyle: .alert)
-        alert.addTextField { textField in
-                    textField.placeholder = "Enter pace here..."
+@objc func Tap() {
+    if write {
+        write.toggle()
+        writer.close()
+        stop()
+        button.setTitle("Start", for: .normal)
+        AlertView.action(self, handler: { [weak self] _ in self?.viewCreatedFiles() }, animated: true)
+    } else {
+        guard APP.isDeviceMotionAvailable else {
+            AlertView.alert(self, "Sorry", "Your device is not supported.")
+            return
         }
         
-        let startAction = UIAlertAction(title: "Start", style: .default) { [weak self] _ in
+        // Call start() to prompt user for pace before recording begins
+        start()
+    }
+}
+
+
+    func start() {
+    let alert = UIAlertController(
+        title: "Enter Desired Pace",
+        message: "Specify your pace (e.g., slow, moderate, fast)",
+        preferredStyle: .alert
+    )
+
+    alert.addTextField { textField in
+        textField.placeholder = "Enter pace here..."
+    }
+
+    let startAction = UIAlertAction(title: "Start", style: .default) { [weak self] _ in
         guard let self = self, let pace = alert.textFields?.first?.text, !pace.isEmpty else { return }
-        
+
         // Display selected pace in textView
         DispatchQueue.main.async {
             self.textView.text = "Recording started with pace: \(pace)\n\n" + self.textView.text
         }
-        
-        // Start motion updates after getting the pace
+
+        // Toggle writing state **after user input**
+        self.write = true
+        self.button.setTitle("Stop", for: .normal)
+
+        // Prepare file for writing
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let now = Date()
+        let filename = self.f.string(from: now) + "_motion.csv"
+        let fileUrl = dir.appendingPathComponent(filename)
+        self.writer.open(fileUrl)
+
+        // Start motion updates
         self.APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: { motion, error in
             guard let motion = motion, error == nil else { return }
             self.writer.write(motion)
             self.printData(motion)
         })
     }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
-        alert.addAction(startAction)
-        alert.addAction(cancelAction)
-        
-        // Present the alert before starting motion updates
-        DispatchQueue.main.async {
-            self.present(alert, animated: true, completion: nil)
-        }
 
-        // APP.startDeviceMotionUpdates(to: OperationQueue.current!, withHandler: {[weak self] motion, error  in
-        //     guard let motion = motion, error == nil else { return }
-        //         self?.writer.write(motion)
-        //     self?.printData(motion)
-        // })
+    let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+
+    alert.addAction(startAction)
+    alert.addAction(cancelAction)
+
+    // Present the alert before starting motion updates
+    DispatchQueue.main.async {
+        self.present(alert, animated: true, completion: nil)
     }
-    
+}
+
+
     func stop() { APP.stopDeviceMotionUpdates() }
     
-    @objc func Tap() {
-        if write {
-            write.toggle()
-            writer.close()
-            stop()
-            button.setTitle("Start", for: .normal)
-            AlertView.action(self, handler: {[weak self](_) in self?.viewCreatedFiles()}, animated: true)
-        } else {
-            guard APP.isDeviceMotionAvailable else {
-                AlertView.alert(self, "Sorry", "Your device is not supported.")
-                return
-            }
-            write.toggle()
-            button.setTitle("Stop", for: .normal)
-            let dir = FileManager.default.urls(
-              for: .documentDirectory,
-              in: .userDomainMask
-            ).first!
+    // @objc func Tap() {
+    //     if write {
+    //         write.toggle()
+    //         writer.close()
+    //         stop()
+    //         button.setTitle("Start", for: .normal)
+    //         AlertView.action(self, handler: {[weak self](_) in self?.viewCreatedFiles()}, animated: true)
+    //     } else {
+    //         guard APP.isDeviceMotionAvailable else {
+    //             AlertView.alert(self, "Sorry", "Your device is not supported.")
+    //             return
+    //         }
+    //         write.toggle()
+    //         button.setTitle("Stop", for: .normal)
+    //         let dir = FileManager.default.urls(
+    //           for: .documentDirectory,
+    //           in: .userDomainMask
+    //         ).first!
 
-            let now = Date()
-            let filename = f.string(from: now) + "_motion.csv"
-            let fileUrl = dir.appendingPathComponent(filename)
-            writer.open(fileUrl)
-            start()
-        }
-    }
+    //         let now = Date()
+    //         let filename = f.string(from: now) + "_motion.csv"
+    //         let fileUrl = dir.appendingPathComponent(filename)
+    //         writer.open(fileUrl)
+    //         start()
+    //     }
+    // }
     
     func printData(_ data: CMDeviceMotion) {
         self.textView.text = """
