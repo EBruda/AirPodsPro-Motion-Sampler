@@ -4,7 +4,6 @@
 //
 //  Created by Yoshio on 2020/11/10.
 //
-
 import Foundation
 import UIKit
 import CoreMotion
@@ -25,6 +24,17 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         return button
     }()
     
+    lazy var paceTextField: UITextField = {
+        let textField = UITextField()
+        textField.frame = CGRect(x: self.view.bounds.width / 4, y: self.view.bounds.maxY - 160,
+                                 width: self.view.bounds.width / 2, height: 40)
+        textField.placeholder = "Enter desired pace"
+        textField.borderStyle = .roundedRect
+        textField.textAlignment = .center
+        textField.addTarget(self, action: #selector(paceEntered), for: .editingDidEndOnExit)
+        return textField
+    }()
+    
     lazy var textView: UITextView = {
         let view = UITextView()
         view.frame = CGRect(x: self.view.bounds.minX + (self.view.bounds.width / 10),
@@ -36,8 +46,7 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         return view
     }()
     
-    
-    //AirPods Pro => APP :)
+    // AirPods Pro => APP :)
     let APP = CMHeadphoneMotionManager()
     
     let writer = CSVWriter()
@@ -45,14 +54,13 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
     
     var write: Bool = false
     
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.title = "Information View"
         view.backgroundColor = .systemBackground
         view.addSubview(button)
         view.addSubview(textView)
+        view.addSubview(paceTextField)
         
         f.dateFormat = "yyyyMMdd_HHmmss"
 
@@ -103,13 +111,14 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
         }
     }
     
+    @objc func paceEntered() {
+        if let pace = paceTextField.text, !pace.isEmpty {
+            textView.text = "Desired Pace: \(pace)\n\n" + textView.text
+        }
+    }
+    
     func printData(_ data: CMDeviceMotion) {
         self.textView.text = """
-            Quaternion:
-                x: \(data.attitude.quaternion.x)
-                y: \(data.attitude.quaternion.y)
-                z: \(data.attitude.quaternion.z)
-                w: \(data.attitude.quaternion.w)
             Attitude:
                 pitch: \(data.attitude.pitch)
                 roll: \(data.attitude.roll)
@@ -129,8 +138,7 @@ class ExportCSVViewController: UIViewController, CMHeadphoneMotionManagerDelegat
             """
     }
     
-    func viewCreatedFiles()
-    {
+    func viewCreatedFiles() {
         guard let dir = FileManager.default.urls(for: .documentDirectory,in: .userDomainMask).first,
               let components = NSURLComponents(url: dir, resolvingAgainstBaseURL: true) else { return }
         components.scheme = "shareddocuments"
